@@ -1,9 +1,9 @@
 # umwelt
 Elm framework for dealing with state maintaining nodes
 
-This is pre-alpha anything. This framework allows for extending events (node state updates),
-(event start/start), collision detection, drag & drop, drag handling, and anything else I
-thought of at the time to a network of nodes (packets of state including a Graphics.Collage.Form).
+This is pre-alpha anything. This "framework" allows for extending events (node state updates),
+triggers (event start/start), collision detection, quadtree info , drag & drop, drag handling,
+and anything else I thought of at the time to a network of nodes (packets of state including a Graphics.Collage.Form).
 It basically started as an approach to drawing a form element element onto the canvas and being
 able to interact with it later.
 
