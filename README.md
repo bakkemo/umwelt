@@ -1,9 +1,10 @@
 # umwelt
-Elm framework for dealing with state maintaining nodes
+Elm framework for dealing with state maintaining nodes in a scene
 
 This is pre-alpha anything. This "framework" allows for extending events (node state updates),
-triggers (event start/start), collision detection, quadtree info , drag & drop, drag handling,
-and anything else I thought of at the time to a network of nodes (packets of state including a Graphics.Collage.Form).
+triggers (event start/start), collision detection, composite objects and quadtree info for
+concave object collision detection (as well as spacially partioning collision detection), drag & drop,
+drag handling, and anything else I thought of at the time to a network of nodes (packets of state including a Graphics.Collage.Form).
 It basically started as an approach to drawing a form element element onto the canvas and being
 able to interact with it later.
 
@@ -27,6 +28,6 @@ Feel free to send ideas/critiques. Part of that is I had my head down and follow
 post v0.13. If you offhand notice something I'm doing that is obviated by new Elm core or community stuff,
 or new Elm semantics, it would be awesome if you let me know :)
 
-You should be able to just install elm 0.14, clone into a directory, and run elm-reactor in it.
-Move the objects around. Notice the collision detection. drag and release the blue dot. Drop a node on
-the green dot. drop something on it again. Wheeee!
+You should be able to just install elm 0.14, clone into a directory, and run elm-reactor in it. main is
+in click.elm. Move the objects around. Notice the collision detection. drag and release the blue dot.
+Drop a node on the green dot. drop something on it again. Wheeee!
