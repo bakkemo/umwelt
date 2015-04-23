@@ -9,20 +9,20 @@ module Scene
     ) where
 
 
-import Touch (Touch, touches)
+import Touch exposing (Touch, touches)
 import IxArray as Ix
-import DataTypes (..)  
-import NodeUtil (..)
-import EventUtils (..)
-import Triggers (..)
-import GJK (..)
+import DataTypes exposing (..)  
+import NodeUtil exposing  (..)
+import EventUtils exposing (..)
+import Triggers exposing (..)
+import GJK exposing (..)
 import Dict
 import Basics as B
 import Debug
-import Time (Time)
-import Color (..)
-import Graphics.Element (..)
-import Graphics.Collage (..)
+import Time exposing (Time)
+import Color exposing (..)
+import Graphics.Element exposing (..)
+import Graphics.Collage exposing (..)
 import List as L
 --import List 
 --import Window

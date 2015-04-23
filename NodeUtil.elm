@@ -31,10 +31,10 @@ module NodeUtil
 
 
 
-import DataTypes (..)
-import Touch (Touch, touches)
+import DataTypes exposing (..)
+import Touch exposing (Touch, touches)
 import List
-import Graphics.Collage (..)
+import Graphics.Collage exposing (..)
 import Debug
 import Array as A
 import IxArray as Ix
@@ -42,10 +42,14 @@ import Dict as D
 import Basics as B
 import String as S
 import Bitwise as BW
-import Color (..)
+import Color exposing (..)
 import List as L
-import Maybe (..)
+import Maybe exposing (..)
 
+
+unsafeHead : List a -> a
+unsafeHead (h :: rest) = h
+        
 -- since nodes take into account touches dx,dy component
 -- take them into acccount when placing forms
 moveNode : Node -> Form
@@ -132,6 +136,7 @@ moveNodeWD node {-id,x,y,dx,dy,el,prefix,tl,br, qt_tlp, qt_trp, qt_blp, qt_brp-}
         qtCenter = filled red (circle 3)
         qtVert = filled purple (circle 3)
         nodeCent = filled black (circle 3)
+        origin = filled red (circle 1)
         (tx,ty) = node.tl
         (bx,by) = node.br
         x = round rx
@@ -153,7 +158,7 @@ moveNodeWD node {-id,x,y,dx,dy,el,prefix,tl,br, qt_tlp, qt_trp, qt_blp, qt_brp-}
         qtbbBR = alpha 0.3 (filled lightYellow (prefixToBBPoly 300 300 pBR))
 
     in    
-        [ move (rx, ry) node.el, move (rx,ry) nodeCent, bbPath, qtbbTL, qtbbTR, qtbbBL, qtbbBR
+        [ move (rx, ry) node.el, move (rx,ry) nodeCent, bbPath, qtbbTL, qtbbTR, qtbbBL, qtbbBR, origin
         {-, move (nx, ny) qtCenter, move (x1,y1) qtVert, move (x2,y2) qtVert, move (x3,y3) qtVert, move (x4,y4) qtVert-}]
 
 
@@ -293,7 +298,7 @@ isNode nid node = (node.id == nid)
 --TODO:LIST:TODO
 getNodeById : NodeId -> List Node -> Node
 getNodeById nid nodes =
-    List.head (L.filter (isNode nid) nodes)
+    unsafeHead (L.filter (isNode nid) nodes)
 
 
 getNodeByIxId : Ix.IxArray Node -> NodeId -> Maybe Node

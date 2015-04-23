@@ -4,10 +4,10 @@ module Triggers
     , runTriggers
     ) where
 
-import DataTypes (..)
+import DataTypes exposing (..)
 import IxArray as Ix
-import NodeUtil (getHOVByName, getHOVById)
-import EventUtils (activate, toggle)
+import NodeUtil exposing (getHOVByName, getHOVById)
+import EventUtils exposing (activate, toggle)
 import List
 import Debug
 

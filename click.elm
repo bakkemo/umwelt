@@ -1,26 +1,26 @@
 import Window
 import Mouse
-import Touch (Touch, touches)
+import Touch exposing (Touch, touches)
 import List as L
 import Maybe
 import Basics as B
 import Text as T
 import Graphics.Input as GI
 import Graphics.Collage
-import Graphics.Element (..)
+import Graphics.Element exposing (..)
 import Debug
 import Time as T
 import Array as A
 import Dict as D
 import IxArray as Ix
-import DataTypes (..)  
-import NodeUtil (..)
-import TestNodes (..)
-import EventUtils (..)
-import Triggers (..)
-import Scene (..)
-import GJK (..)
-import Setup (..)
+import DataTypes exposing (..)  
+import NodeUtil exposing (..)
+import TestNodes exposing (..)
+import EventUtils exposing (..)
+import Triggers exposing (..)
+import Scene exposing (..)
+import GJK exposing (..)
+import Setup exposing (..)
 import Signal
 
 defstate =
@@ -89,7 +89,7 @@ sceneHeight = 300
 sceneQTDepth = 3
 
 nodes : List Node
-nodes = [yellowDot,blueDot,greenDot, trig1,trig2{-,trig4,trig5,, ,trig3-}]
+nodes = [yellowDot,greenDot,blueDot, trig1,trig2{-,trig4,trig5,, ,trig3-}]
 eventSets : List EventSet
 eventSets = [floatEvent, releaseEvent {-,testEvent2-} ] 
 
@@ -126,7 +126,7 @@ testScene =
 utestScene = updateTags testScene
 
 
-mkText = Signal.map T.asText
+mkText = Signal.map show 
 mt = mkText
 lift = Signal.map
 
@@ -142,8 +142,8 @@ relmp = Signal.map (relativeMouse (150,150)) Mouse.position
 
 --foldp (a -> b -> b) -> b -> Signal a -> Signal b
 scenic : Signal Scene
-scenic = Signal.foldp sceneUpdate utestScene input
---scenic = Signal.foldp sceneUpdateNoFPS utestScene inputNoFPS
+--scenic = Signal.foldp sceneUpdate utestScene input
+scenic = Signal.foldp sceneUpdateNoFPS utestScene inputNoFPS
 
 
 foo : Signal (List Element)

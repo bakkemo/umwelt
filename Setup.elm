@@ -3,15 +3,15 @@ module Setup
     ) where
 
 import Debug
-import DataTypes (..)
+import DataTypes exposing (..)
 import Dict as D
 import List as L
 import IxArray as Ix
-import NodeUtil (getPos, getNodeByIxId, updateNodePrefix, getBoundingRect)
+import NodeUtil exposing (getPos, getNodeByIxId, updateNodePrefix, getBoundingRect)
 --import EventUtils (activate)
-import Maybe (..)
-import Signal ((<~), constant)
-import Time (timestamp)
+import Maybe exposing (..)
+import Signal exposing ((<~), constant)
+import Time exposing (timestamp)
 
 {-
  |

@@ -13,13 +13,15 @@ module EventUtils
     ) where
 
 import Debug
-import DataTypes (..)
+import DataTypes exposing (..)
 import Dict as D
 import List as L
 import IxArray as Ix
-import NodeUtil (getPos, getNodeByIxId, updateNodeInfoScene, updateNodeQTData, updateNodePrefix, getBoundingRect)
+import NodeUtil exposing (getPos, getNodeByIxId, updateNodeInfoScene, updateNodeQTData, updateNodePrefix, getBoundingRect)
 import Maybe
 
+
+unsafeHead (h :: rest) = h
 
 forever = 1/0
 never = 0
@@ -173,8 +175,8 @@ vectorBounce10 (ES es) scene nodes =
     let
         newNodes = L.map (addDelta 15.0 scene.x scene.y scene.w scene.h) nodes
         state = es.state
-        old = L.head nodes
-        new = L.head newNodes
+        old = unsafeHead nodes
+        new = unsafeHead newNodes
         incr = if ((old.vx /= new.vx) || (old.vy /= new.vy)) then 1 else 0
         newcnt  = if (state.count + incr) /= 10 then (state.count + incr) else 0
         newstatus = if (state.count + incr) == 10 then False else True
@@ -202,7 +204,7 @@ vectorFriction : EventSet -> Scene -> List Node -> (EventSet, List Node)
 vectorFriction (ES es) scene nodes =
     let
         s = es.state
-        node = L.head nodes
+        node = unsafeHead nodes
         velo = if (s.flag == True) then (node.unit - min_value) else (easeInSine s.unit)
         newNodes = L.map (addDelta ((toFloat s.count) * velo) scene.x scene.y scene.w scene.h) nodes
         newstatus = if velo < min_value then False else True 

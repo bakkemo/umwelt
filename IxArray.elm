@@ -16,7 +16,7 @@ module IxArray
 import String
 import List
 import Array as A
-import Maybe (..)
+import Maybe exposing (..)
 version : String
 version = "0.1.0"
 

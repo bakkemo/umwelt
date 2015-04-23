@@ -11,12 +11,12 @@ module TestNodes
     ) where
 
 
-import DataTypes(..)
-import Graphics.Collage (..)
-import NodeUtil (..)
+import DataTypes exposing (..)
+import Graphics.Collage exposing (..)
+import NodeUtil exposing (..)
 import Array as A
 import IxArray as Ix
-import Color (..)
+import Color exposing (..)
 import List as L
 
 blueCirc : Form

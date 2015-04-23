@@ -21,11 +21,11 @@ module DataTypes
 
 
 import Dict
-import Touch (Touch, touches)
+import Touch exposing (Touch, touches)
 import Graphics.Collage
 import Array as A
 import IxArray as Ix
-import Time (Time) 
+import Time exposing (Time) 
 
 -- haver type carries node ID, a helpful string, and the touch ID
 -- associated with it

@@ -12,13 +12,15 @@ module GJK
 --    , testMink                             
     ) where
 
-import DataTypes (..)
-import NodeUtil (getPos)
+import DataTypes exposing (..)
+import NodeUtil exposing (getPos)
 import IxArray as Ix
 import Array as A
 import List as L
 import Debug
 import Dict as D
+import Collision as C
+
 
 type alias Poly = A.Array (Float,Float)
 type alias Pt = (Float, Float)
@@ -26,18 +28,11 @@ type alias Pt = (Float, Float)
 -- a suuport is a function from a poly and a direction to a vertex index in the poly
 -- maybe not
 type alias Support = Poly -> (Float, Float) -> (Float,Float)
+type alias Mink a = (a, (a -> Pt -> Pt))
 
-type Minkowski = Mink
-    { shape1ID : Int
-    , shape2ID : Int
-    , support1 : Support
-    , support2 : Support
-    }
 
-type Simplex = Sim
-    { mink : Minkowski
-    , sim: (Int,Int) 
-    }
+unsafeHead (h :: rest) = h
+
 
 {-
  - all this flipping back and forth from array representaion to list representation
@@ -107,9 +102,11 @@ polySupport poly d =
         list = A.toList poly
         dotList = L.map (dot d) list
         decorated = (L.map2 (,)) dotList list
-        (m, p) = L.maximum decorated
     in
-        p
+        case (L.maximum decorated) of
+            Just (m, p) -> p
+            otherwise   -> (-10000,-10000)
+
 
 {-
  - synthesize a "vertex" for the circle. normalize the vector and scale
@@ -132,9 +129,11 @@ listSupport list d =
     let
         dotList = L.map (dot d) list
         decorated = (L.map2 (,)) dotList list
-        (m, p) = L.maximum decorated
     in
-        p
+        case (L.maximum decorated) of
+            Just (m, p) -> p
+            otherwise   -> (-10000,-10000)
+
 
 {-
  - calculate the Minkowski difference vertex furthest in the direction of d
@@ -181,6 +180,19 @@ getSupport node d =
        | node.bound == Circ -> circSupport node d
 
 
+myGetSupport : Node -> (Float, Float) -> (Float, Float)
+myGetSupport node d =
+    let
+        c = getPos node
+        v = 
+            if | node.bound == Poly -> polySupport node.boundPoly d
+            | node.bound == Circ -> circSupport node d
+    in
+        add v c
+
+
+
+
 {-
  - calculate the support of the Minkowski difference
  - of two nodes 
@@ -188,6 +200,7 @@ getSupport node d =
 calcMinkSupport : Node -> Node -> (Float, Float) -> (Float,Float) 
 calcMinkSupport node1 node2 d =
     let
+        x = if d == (0,0) then Debug.log "(0,0) passed to CMS" d else d 
         c1 =  getPos node1
         c2 =  getPos node2
         v1 = getSupport node1 (neg d)
@@ -197,14 +210,64 @@ calcMinkSupport node1 node2 d =
      in
         sub p1 p2
 
+getNodeSupport : Node -> (Float, Float) -> (Float, Float)
+getNodeSupport node d =
+    let
+        c = (getPos node)
+        v = getSupport node d
+        a =
+           case node.bound of
+              Circ -> add v c
+              Poly -> add v c
+    in
+        a
+
+
+-- pass bc as first parameter
+getDirectionVector : Pt -> Pt -> Pt
+getDirectionVector (x1, y1) (x2, y2) =
+    let
+        -- try the triple cross
+        d = trip (x1,y1) (x2,y2) (x1,y1)
+        colinear = (d == (0,0))
+        --s = if colinear then Debug.log "bc colinear with c0" 1 else 1
+
+        -- bc and c0 are colinear and gave us a 0 cross product.
+        -- inject bc into 3d and get ANY perp (the algorithm should
+        -- not care in this case) so now crossing bc=(x1,y1,0) with c=(-x2, -y2, 1)
+        -- remember the second parameter was c0 = -c
+        --
+        -- (u2v3 - u3v2)i - (u1v3 - u3v1)j + (who cares)k
+        -- so...
+        -- px = (y1*1 - 0*(-y2)),  py = -(x1*1 - 0*(-x2))   
+        -- px = y1                 py = -x1
+        -- 
+        -- which is a detailed derivation of the obvious :)
+    in
+        if colinear then (y1, -x1) else d 
 
 {-
+-}
+collision : Int -> (Ix.IxArray Node) -> Int -> Int -> Bool
+collision frame ixNodes id1 id2 = 
+    let
+        (Just node1) = Ix.get id1 ixNodes -- these should in fact be total
+        (Just node2) = Ix.get id2 ixNodes -- these should in fact be total
+        oblivious = (node1.parentId == node2.parentId) || (L.length node1.childIds > 0) || (L.length node2.childIds > 0)
+        intersects = C.collision 200 (node1, getNodeSupport) (node2, getNodeSupport)
+    in
+        if  | oblivious -> False 
+            | otherwise -> intersects
+
+{-
+
  - the loop of collision recurses with the nodes (for support calculations) and a  
  - (simplex, direction) pair. The simplex can be one or two points, and an attempt
  - to enclose the origin by adding a third "support" point in the given direction
  - If the simplex is one point, then encloses will fail on its patern match, and
  - a second vertex will be added in the next recursion
  -}
+{-
 collision : Int -> (Ix.IxArray Node) -> Int -> Int -> Bool
 collision frame ixNodes id1 id2 = 
     let
@@ -215,23 +278,26 @@ collision frame ixNodes id1 id2 =
         d2 = neg d1
         c = calcMinkSupport node1 node2 d1
         b = calcMinkSupport node1 node2 d2
+
         -- simplex is cb and direction is (cb x c0 x cb)
         cb = from c b
         c0 = neg c
-        d = trip cb c0 cb
+        d = getDirectionVector cb c0
         (intersects, (sim, newD)) = doSimplex frame 0 node1 node2 ([b,c], d)
+        cint = C.collision 200 (node1, myGetSupport) (node2, myGetSupport)
     in
         if  | oblivious -> False 
             | otherwise -> intersects
+-}
 
 
 {-
  - a pair of sanity functions
  -}
-bail ret =
+bail d bool ret =
     let
-        --a = Debug.log "<><><>\n<><><>\nShould be exiting with value\n<><><>\n<><><>\n" ret
-        b = 1
+        a = if bool then Debug.log ("GJK exiting at depth: " ++ (toString d)) ret else ret
+        b = 1 
     in
         ret
 
@@ -256,19 +322,17 @@ doSimplex : Int -> Int -> Node -> Node -> (List Pt, Pt) -> (Bool, (List Pt, Pt))
 doSimplex frame depth node1 node2 (sim, d) =-- (True, ([(0.0,0.0)], (0.0,0.0)))
     let
         a = (calcMinkSupport node1 node2 d)
-        z = rep frame depth (sim, d) [] []
         notPastOrig = ((dot a d) < 0)       -- if not past origin, there is no intersection
-        b = L.head sim
+        b = unsafeHead sim
         supportError = anyZero a b d        -- shared vertexes is going to count as intersection
         (intersects, (newSim, newDir)) = enclosesOrigin a sim
-        --z = Debug.log "d" (depth, frame)
+       -- (aInt, (ans, and)) = C.enclosesOrigin a sim
     in
-       if | notPastOrig -> bail (False, ([], (toFloat depth,toFloat depth)))
-          | supportError -> bail (True, ([], (0,0)))
-          | intersects -> bail (True, (sim, d))
-          | (depth > 200) -> bail  (False, (newSim, newDir)) 
+       if | notPastOrig -> bail depth (intersects) (False, ([], (toFloat depth,toFloat depth)))
+          | supportError -> bail depth  (intersects) (True, ([], (0,0)))
+          | intersects -> bail depth  (False) (True, (sim, d))
+          | (depth > 200) -> bail depth  (intersects) (False, (newSim, newDir)) 
           | otherwise -> doSimplex frame (depth+1) node1 node2 (newSim, newDir)
-
 
 
 {-
@@ -328,7 +392,6 @@ handle1Simplex a b c =
         ac = from a c
         abp = perp ab (neg ac) -- perpendicular to ab facing away from c
         acp = perp ac (neg ab) -- perpendicular to ac facing away from a
-
     in
         if  | (isSameDirection abp a0) -> -- region 4 or 5
                 if (isSameDirection ab a0) then (False, ([a,b], abp)) else (False, ([a], a0))
@@ -336,9 +399,14 @@ handle1Simplex a b c =
                 if (isSameDirection ac a0) then (False, ([a,c], acp)) else (False, ([a], a0)) 
             | otherwise -> (True, ([b,c], a0)) 
 
-
 -- perpendicular to a in direction of b (2D case)
-perp a b = trip a b a
+--perp a b = trip a b a
+perp a b =
+   let
+      p = trip a b a
+      p2 = if (p == (0,0)) then Debug.log "GJK perp err" p else p
+   in
+      p
 
 -- not sure this gets inlined :/
 isSameDirection a b = (dot a b) > 0
