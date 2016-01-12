@@ -58,7 +58,8 @@ relativeMouse (ox, oy) (x,y) = (x - ox, -y + oy)
 -- quick drawing order fix to draw them on top
 renderScene scene =
     let
-        (Just n1) = Ix.get 0 scene.ixNodes
+        a = 1
+       -- (Just n1) = Ix.get 0 scene.ixNodes
        -- (Just n2) = Ix.get 1 scene.ixNodes
     in 
         color grey <| collage scene.w scene.h (L.concat (L.map (moveNodeCase scene.ixNodes) ((Ix.getArrayList scene.ixNodes) ++ scene.tnodes)){-++ drawMink scene.up n1 n2-}) 
@@ -109,23 +110,23 @@ updateScene scene ts (x,y) touches hovs mhovs =
         cd = getCollisionsDict eventedIxNodes possibles
     in
         { scene |
-          ixNodes <- eventedIxNodes
-        , hovs <- hovs
-        , tnodes <- atouchedNodes
-        , lastDropTar <- {-dbgh-} targets
-        , touches <- touches
-        , mouse <- (x,y)
-        , mHovs <- mhovs
-        , droppedMHovs <- droppedMHov
-        , droppedHovs <- droppedHov
-        , droppedTouches <- droppedTouches
-        , up <- scene.up + 1
-        , ixEventSets <- ixes
-        , qtData <- qtInfo
-        , possibles <- possibles
-        , collData <- collisionsData
-        , collisionDict <- cd
-        , currTime <- ts
+          ixNodes = eventedIxNodes
+        , hovs = hovs
+        , tnodes = atouchedNodes
+        , lastDropTar = {-dbgh-} targets
+        , touches = touches
+        , mouse = (x,y)
+        , mHovs = mhovs
+        , droppedMHovs = droppedMHov
+        , droppedHovs = droppedHov
+        , droppedTouches = droppedTouches
+        , up = scene.up + 1
+        , ixEventSets = ixes
+        , qtData = qtInfo
+        , possibles = possibles
+        , collData = collisionsData
+        , collisionDict = cd
+        , currTime = ts
         }   
 
 

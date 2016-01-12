@@ -8,6 +8,7 @@ module TestNodes
     , trig4
     , trig5
     , testMink
+    , dot
     ) where
 
 
@@ -65,14 +66,14 @@ dot =   { x = 0
         , el = (circle 20 |> filled yellow) 
         }
 
-blueDot = { dot | x <- 30, y <- 80, id <- 1, name <- "blue", tl <- (-20,20), br <- (20,-20), childNames <- [], dh <- DH springDrag, el <- blueCirc}
-greenDot = { dot | x <- -30, y <- -30, id <- 2, tl <- (-20,20), br <- (20,-20), name <- "green", el <- greenCirc }
-yellowDot = { dot | x <- 100, y <- 100, id <- 3, tl <- (-20,20), br <- (20,-20), name <- "yellow", el <- yellowCirc }
-trig1x = { dot | id <- 4, name <- "trig1", tl <- (-40,20), br <- (40,-40), bound <- Poly, boundPoly <- (A.fromList boundary1), el <- poly1}
-trig2x = { dot | id <- 5, name <- "trig2", tl <- (-60,50), br <- (40,-40), bound <- Poly, boundPoly <- (A.fromList boundary2), el <- poly2, x <- 32 }
-trig3 = { dot | y <- 5, id <- 6, name <- "trig3", tl <- (-40,20), br <- (40,-40), bound <- Poly, boundPoly <- (A.fromList boundary1), childNames <-["trig1","trig2"], el <- poly1 }
-trig4 = { dot | id <- 7, name <- "trig4", tl <- (-60,50), br <- (40,-40), bound <- Poly, boundPoly <- (A.fromList boundary2), el <- poly2, y <- -32 }
-trig5 = { dot | id <- 8, name <- "trig5", tl <- (-60,50), br <- (40,-40), bound <- Poly, boundPoly <- (A.fromList boundary2), el <- poly2, y <- 90 }
+blueDot = { dot | x = 30, y = 80, id = 1, name = "blue", tl = (-20,20), br = (20,-20), childNames = [], dh = DH springDrag, el = blueCirc}
+greenDot = { dot | x = -30, y = -30, id = 2, tl = (-20,20), br = (20,-20), name = "green", el = greenCirc }
+yellowDot = { dot | x = 100, y = 100, id = 3, tl = (-20,20), br = (20,-20), name = "yellow", el = yellowCirc }
+trig1x = { dot | id = 4, name = "trig1", tl = (-40,20), br = (40,-40), bound = Poly, boundPoly = (A.fromList boundary1), el = poly1}
+trig2x = { dot | id = 5, name = "trig2", tl = (-60,50), br = (40,-40), bound = Poly, boundPoly = (A.fromList boundary2), el = poly2, x = 32 }
+trig3 = { dot | y = 5, id = 6, name = "trig3", tl = (-40,20), br = (40,-40), bound = Poly, boundPoly = (A.fromList boundary1), childNames =["trig1","trig2"], el = poly1 }
+trig4 = { dot | id = 7, name = "trig4", tl = (-60,50), br = (40,-40), bound = Poly, boundPoly = (A.fromList boundary2), el = poly2, y = -32 }
+trig5 = { dot | id = 8, name = "trig5", tl = (-60,50), br = (40,-40), bound = Poly, boundPoly = (A.fromList boundary2), el = poly2, y = 90 }
 
 
 trig1 = {-updateNodeInfo 0 0 0-} trig1x
@@ -87,7 +88,7 @@ testMink = { depth = 0
            , bp1 = [(-2,-11),(18,13),(45,18),(58,-12),(43,-37),(10,-31)]
            }
 
-setCompositeDeltas (dx,dy) node = { node | px <- dx, py <- dy }
+setCompositeDeltas (dx,dy) node = { node | px = dx, py = dy }
 
 {-
  |
@@ -108,8 +109,8 @@ simpleDrag node children touch dropped =
         nx = node.x + vx
         ny = node.y - vy
         newNode = case dropped of
-                    False -> { node |  dx <- toFloat vx, dy <- toFloat vy }            
-                    True  -> { node | x <- nx, y <- ny, dx <- 0, dy <- 0 } 
+                    False -> { node |  dx = toFloat vx, dy = toFloat vy }            
+                    True  -> { node | x = nx, y = ny, dx = 0, dy = 0 } 
         pos = getPos newNode
 
     in
@@ -153,8 +154,8 @@ springDrag node children touch dropped =
 
     in
         case dropped of
-            False -> [{ node |  dx <- newdx, dy <- newdy }]            
-            True  -> [{ node |  dx <- 0, dy <- 0, vx <- vx, vy <- vy, unit <- unit}]  
+            False -> [{ node |  dx = newdx, dy = newdy }]            
+            True  -> [{ node |  dx = 0, dy = 0, vx = vx, vy = vy, unit = unit}]  
 
 
 

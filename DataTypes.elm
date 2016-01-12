@@ -16,16 +16,19 @@ module DataTypes
     , BoundType (..)
     , QTData
     , Bunk
+    , emptyNode
+    , emptyEventSet
     ) where
 
 
 
 import Dict
 import Touch exposing (Touch, touches)
-import Graphics.Collage
+import Graphics.Collage exposing (filled, circle)
 import Array as A
 import IxArray as Ix
 import Time exposing (Time) 
+import Color exposing (yellow)
 
 -- haver type carries node ID, a helpful string, and the touch ID
 -- associated with it
@@ -74,6 +77,15 @@ type alias EventState =
     , flag : Bool
     }
 
+emptyEventState =
+    { unit = 0.0 
+    , count = 0 
+    , fps = 0.0 
+    , runTill = 0.0 
+    , lastUpdate = 0.0 
+    , nextUpdate = 0.0 
+    , flag = False
+    }
 
 type alias QTData =
     { tl : String
@@ -92,6 +104,18 @@ type EventSet = ES
     , act : EventSet -> Scene -> List Node -> (EventSet, List Node) -- does the action need all the scene data?
     } 
 
+nullAct : EventSet -> Scene -> List Node -> (EventSet, List Node)
+nullAct es s ln = (es, ln)
+
+emptyEventSet = ES
+    { nodeIds = []
+    , id = -2   -- id of the event set
+    , name = ""
+    , tags = []
+    , eventStatus = False
+    , state = emptyEventState  
+    , act = nullAct -- does the action need all the scene data?
+    } 
 
 type alias EventTag = String -- temporary definition
 
@@ -135,6 +159,44 @@ type alias Node =
     , dh : DragHandler
     , el : Graphics.Collage.Form
     }
+
+emptyNode : Node
+emptyNode = 
+    { x = 0
+    , y = 0       
+    , dx = 0.0
+    , dy = 0.0
+    , vx = 0.0
+    , vy = 0.0
+    , px = 0.0
+    , py = 0.0
+    , tl = (0, 0)
+    , br = (0, 0)
+    , unit = 0.0
+    , prefix = ""
+    , qtUpdate = False
+    , qt_tlp = ""
+    , qt_trp = ""
+    , qt_blp = ""
+    , qt_brp = ""
+    , w = 0
+    , h = 0
+    , id = -1
+    , parentId = -2
+    , parentName = ""
+    , childIds = []
+    , childNames = []
+    , tags = []
+    , bound = Circ
+    , boundPoly = A.empty 
+    , name = ""
+    , dh = DH noDrag 
+    , el = (circle 20 |> filled yellow) 
+    }
+
+
+noDrag : DragFunc 
+noDrag node children touch dropped = [node]
 
 -- a collection of nodes that might need touch support
 -- maintains previous touches and mouse to determined dropped ones

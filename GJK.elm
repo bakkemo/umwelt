@@ -16,6 +16,7 @@ import DataTypes exposing (..)
 import NodeUtil exposing (getPos)
 import IxArray as Ix
 import Array as A
+import Maybe exposing (withDefault)
 import List as L
 import Debug
 import Dict as D
@@ -31,8 +32,13 @@ type alias Support = Poly -> (Float, Float) -> (Float,Float)
 type alias Mink a = (a, (a -> Pt -> Pt))
 
 
-unsafeHead (h :: rest) = h
+--unsafeHead (h :: rest) = h
 
+unsafeHead : List a -> a
+unsafeHead lst =
+    case (List.head lst) of
+        (Just h)  -> h
+        otherwise -> Debug.crash "fuck you czapliki"
 
 {-
  - all this flipping back and forth from array representaion to list representation
@@ -153,8 +159,8 @@ calcMinkSupportBP bp1 bp2 d =
 calcMinkSupportByID : Ix.IxArray Node -> Int -> Int -> (Float, Float) -> (Float,Float) 
 calcMinkSupportByID ixNodes id1 id2 d =
     let
-        (Just node1) = Ix.get id1 ixNodes -- these should in fact be total
-        (Just node2) = Ix.get id2 ixNodes -- these should in fact be total
+        node1 = withDefault emptyNode (Ix.get id1 ixNodes) -- these should in fact be total
+        node2 = withDefault emptyNode (Ix.get id2 ixNodes) -- these should in fact be total
         c1 =  getPos node1
         c2 =  getPos node2
         v1 = getSupport node1 (neg d)
@@ -176,8 +182,9 @@ anyZero a b c =  (a == (0.0, 0.0)) || (b == (0.0, 0.0)) || (c == (0.0, 0.0))
  -}
 getSupport : Node -> (Float, Float) -> (Float, Float)
 getSupport node d =
-    if | node.bound == Poly -> polySupport node.boundPoly d
-       | node.bound == Circ -> circSupport node d
+    case node.bound of
+        Poly -> polySupport node.boundPoly d
+        Circ -> circSupport node d
 
 
 myGetSupport : Node -> (Float, Float) -> (Float, Float)
@@ -185,8 +192,9 @@ myGetSupport node d =
     let
         c = getPos node
         v = 
-            if | node.bound == Poly -> polySupport node.boundPoly d
-            | node.bound == Circ -> circSupport node d
+            case node.bound of
+                Poly -> polySupport node.boundPoly d
+                Circ -> circSupport node d
     in
         add v c
 
@@ -251,13 +259,13 @@ getDirectionVector (x1, y1) (x2, y2) =
 collision : Int -> (Ix.IxArray Node) -> Int -> Int -> Bool
 collision frame ixNodes id1 id2 = 
     let
-        (Just node1) = Ix.get id1 ixNodes -- these should in fact be total
-        (Just node2) = Ix.get id2 ixNodes -- these should in fact be total
+        node1 = withDefault emptyNode (Ix.get id1 ixNodes) -- these should in fact be total
+        node2 = withDefault emptyNode (Ix.get id2 ixNodes) -- these should in fact be total
         oblivious = (node1.parentId == node2.parentId) || (L.length node1.childIds > 0) || (L.length node2.childIds > 0)
         intersects = C.collision 200 (node1, getNodeSupport) (node2, getNodeSupport)
     in
-        if  | oblivious -> False 
-            | otherwise -> intersects
+        if oblivious then False 
+        else intersects
 
 {-
 
@@ -328,11 +336,16 @@ doSimplex frame depth node1 node2 (sim, d) =-- (True, ([(0.0,0.0)], (0.0,0.0)))
         (intersects, (newSim, newDir)) = enclosesOrigin a sim
        -- (aInt, (ans, and)) = C.enclosesOrigin a sim
     in
-       if | notPastOrig -> bail depth (intersects) (False, ([], (toFloat depth,toFloat depth)))
-          | supportError -> bail depth  (intersects) (True, ([], (0,0)))
-          | intersects -> bail depth  (False) (True, (sim, d))
-          | (depth > 200) -> bail depth  (intersects) (False, (newSim, newDir)) 
-          | otherwise -> doSimplex frame (depth+1) node1 node2 (newSim, newDir)
+        if notPastOrig then 
+            bail depth (intersects) (False, ([], (toFloat depth,toFloat depth)))
+        else if supportError then 
+            bail depth  (intersects) (True, ([], (0,0)))
+        else if intersects then 
+            bail depth  (False) (True, (sim, d))
+        else if (depth > 200) then 
+            bail depth  (intersects) (False, (newSim, newDir)) 
+        else 
+            doSimplex frame (depth+1) node1 node2 (newSim, newDir)
 
 
 {-
@@ -393,11 +406,12 @@ handle1Simplex a b c =
         abp = perp ab (neg ac) -- perpendicular to ab facing away from c
         acp = perp ac (neg ab) -- perpendicular to ac facing away from a
     in
-        if  | (isSameDirection abp a0) -> -- region 4 or 5
-                if (isSameDirection ab a0) then (False, ([a,b], abp)) else (False, ([a], a0))
-            | (isSameDirection acp a0) -> -- region 6 or 5
-                if (isSameDirection ac a0) then (False, ([a,c], acp)) else (False, ([a], a0)) 
-            | otherwise -> (True, ([b,c], a0)) 
+        if (isSameDirection abp a0) then -- region 4 or 5
+            if (isSameDirection ab a0) then (False, ([a,b], abp)) else (False, ([a], a0))
+        else if (isSameDirection acp a0) then -- region 6 or 5
+            if (isSameDirection ac a0) then (False, ([a,c], acp)) else (False, ([a], a0)) 
+        else 
+            (True, ([b,c], a0)) 
 
 -- perpendicular to a in direction of b (2D case)
 --perp a b = trip a b a
@@ -501,8 +515,8 @@ isCollision ((a,b), bool) = bool
 substParent : Ix.IxArray Node -> ((Int,Int), Bool) -> ((Int,Int),Bool)
 substParent ixNodes ((a,b), bool) =
     let
-        (Just node1) = Ix.get a ixNodes
-        (Just node2) = Ix.get b ixNodes
+        node1 = withDefault emptyNode (Ix.get a ixNodes)
+        node2 = withDefault emptyNode (Ix.get b ixNodes)
     in
 
         ((node1.parentId, node2.parentId), bool)
@@ -511,9 +525,13 @@ substParent ixNodes ((a,b), bool) =
 collisionFold : Ix.IxArray Node -> (Int, Int) -> D.Dict (Int, Int) Bool -> D.Dict (Int, Int) Bool
 collisionFold ixNodes (a,b) dict =
     let
-        newDict= if | D.member (a,b) dict -> dict
-                    | (collision -1 ixNodes a b) -> D.insert (a,b) True dict
-                    | otherwise -> dict
+        newDict = 
+            if  (D.member (a,b) dict) then 
+                dict
+            else if (collision -1 ixNodes a b) then 
+                D.insert (a,b) True dict
+            else 
+                dict
     in
         newDict
         
@@ -522,8 +540,8 @@ getCollisionsDict ixNodes possibles = L.foldr (collisionFold ixNodes) D.empty po
 
 updateCollisionDict : Ix.IxArray Node -> Int -> Int -> D.Dict (Int, Int) Bool -> D.Dict (Int, Int) Bool
 updateCollisionDict ixNodes a b dict =
-    if | D.member (a,b) dict -> dict
-       | otherwise -> D.insert (a,b) (collision -2 ixNodes a b) dict
+    if D.member (a,b) dict then dict
+    else D.insert (a,b) (collision -2 ixNodes a b) dict
 
         
 walkPossibles : Ix.IxArray Node -> List (Int, Int) -> D.Dict (Int, Int) Bool -> D.Dict (Int, Int) Bool

@@ -11,6 +11,7 @@ module IxArray
     , updateIxArrayFromList
     , ixSetElem_ArrayFromList 
     , updateIxArrayFromProvidedIxList 
+    , updateIxArrayFromIndexableList
     ) where
 
 import String
@@ -54,7 +55,7 @@ plainUpdate n el ixa =
     let
         arr = A.set n el ixa.arr
     in
-       Ix { ixa | arr <- arr }
+       Ix { ixa | arr = arr }
 
 -- index is less than index array size, but cell has never been set
 -- so push the value on the end of the value array, then point
@@ -67,7 +68,7 @@ newInsert n el ixa =
         arr = A.push el ixa.arr
         ix = A.set n ((A.length arr)-1) ixa.ix
     in
-        Ix { ixa | ix <- ix, arr <- arr } -- does this save any allocation?
+        Ix { ixa | ix = ix, arr = arr } -- does this save any allocation?
 
 
 
@@ -78,7 +79,7 @@ addOnEnd n el ixa =
         arr = A.push el ixa.arr
         ix = A.push endPos ixa.ix
     in
-        Ix { ixa | arr <- arr, ix <- ix }
+        Ix { ixa | arr = arr, ix = ix }
 
 
 -- the fiddly one
@@ -86,12 +87,12 @@ extendIndex n el ixa =
     let
         diff = n - ((A.length ixa.ix) - 1)
     in
-        if  | (diff == 1) -> addOnEnd n el ixa
-            | otherwise ->
-                let
-                    ext = A.initialize (diff-1) (always unused)
-                in
-                    addOnEnd n el { ixa | ix <- (A.append ixa.ix ext) }
+        if (diff == 1) then addOnEnd n el ixa
+        else
+            let
+                ext = A.initialize (diff-1) (always unused)
+            in
+                addOnEnd n el { ixa | ix = (A.append ixa.ix ext) }
 
 
 
@@ -108,12 +109,12 @@ set n el (Ix ixa) =
     let
         index = withDefault out_Of_Range (A.get n ixa.ix)
     in
-        if  | (index == out_Of_Range) -> extendIndex n el ixa
-            | (index == unused) -> newInsert n el ixa
-            | otherwise -> plainUpdate index el ixa
+        if (index == out_Of_Range) then extendIndex n el ixa
+        else if (index == unused) then newInsert n el ixa
+        else plainUpdate index el ixa
 
 --map : (a -> b) -> IxArray a -> IxArray b
-map f ixa = {ixa | arr <- A.map f ixa.arr}
+map f ixa = {ixa | arr = A.map f ixa.arr}
 
 
 
@@ -201,6 +202,12 @@ updateIxArrayFromProvidedIxList getIx ixarr elems =
     in
         List.foldl (foldfunc getIx) ixarr elems
 
+updateIxArrayFromIndexableList : (a -> Int) -> (a -> b) -> IxArray b -> List a -> IxArray b 
+updateIxArrayFromIndexableList getIx getObj ixarr elems =
+    let
+        foldfunc getIx getObj elem ixa = set (getIx elem) (getObj elem) ixa
+    in
+        List.foldl (foldfunc getIx getObj) ixarr elems
 
 {-
  | 
@@ -213,7 +220,7 @@ listToIxArray nodes = updateIxArrayFromList (new 1) nodes
 
 
 
-pushOn el (Ix ixa) = (Ix {ixa | arr <- (A.push el ixa.arr)}) 
+pushOn el (Ix ixa) = (Ix {ixa | arr = (A.push el ixa.arr)}) 
 getRec (Ix rec) = rec
 getArrayList (Ix ixa) = A.toList ixa.arr
 

@@ -172,17 +172,30 @@ ct = lift .currTime scenic
 type alias Foo = { name : String, pos : (Float,Float), id : Int, tlp : String, trp: String, blp : String, brp : String {- tel : (Int,Int,Float,Float,Float,Float)-} }
 
 info : Maybe Node -> Foo
-info (Just node) =
-    { pos = getPos node 
-    , id = node.id
-    , name = node.name
-    , tlp = node.qt_tlp
-    , trp = node.qt_trp
-    , blp = node.qt_blp
-    , brp = node.qt_brp
-   -- , tel = (node.x,node.y,node.dx,node.dy,node.px,node.py)
-    }               
-        
+info mn {-(Just node)-} =
+    case mn of
+        (Just node) ->
+            { pos = getPos node 
+            , id = node.id
+            , name = node.name
+            , tlp = node.qt_tlp
+            , trp = node.qt_trp
+            , blp = node.qt_blp
+            , brp = node.qt_brp
+            -- , tel = (node.x,node.y,node.dx,node.dy,node.px,node.py)
+            }               
+        Nothing ->        
+            { pos = (0.0, 0.0) 
+            , id = -2
+            , name = ""
+            , tlp = ""
+            , trp = ""
+            , blp = ""
+            , brp = ""
+            -- , tel = (node.x,node.y,node.dx,node.dy,node.px,node.py)
+            }               
+
+
 n0 = lift info (lift (Ix.get 0) nds)
 n1 =  lift info (lift (Ix.get 1) nds)
 --n2 =  lift info (lift (Ix.get 2) nds)

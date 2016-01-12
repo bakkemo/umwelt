@@ -10,7 +10,7 @@ import IxArray as Ix
 import NodeUtil exposing (getPos, getNodeByIxId, updateNodePrefix, getBoundingRect)
 --import EventUtils (activate)
 import Maybe exposing (..)
-import Signal exposing ((<~), constant)
+import Signal  -- exposing ((<~), constant)
 import Time exposing (timestamp)
 
 {-
@@ -24,14 +24,14 @@ getNodeId node = node.id
 
 setNodeIx : Int -> Node -> Node
 setNodeIx n node =
-    { node | id <- n }
+    { node | id = n }
 
 getEventSetIx : EventSet -> Int
 getEventSetIx (ES rec) = rec.id
 
 setEventSetIx : Int -> EventSet -> EventSet
 setEventSetIx n (ES rec) =
-    ES { rec | id <- n }
+    ES { rec | id = n }
 
 
 
@@ -116,12 +116,12 @@ setNodeIdsOnEvents nameDict (ES rec) =
     let
         nodeIds = L.map (keyToVal nameDict) rec.tags
     in
-        ES { rec | nodeIds <- nodeIds }
+        ES { rec | nodeIds = nodeIds }
 
 
 setNodeIdsOnTriggers : D.Dict String Int -> EventTrigger -> EventTrigger
 setNodeIdsOnTriggers nameDict (ET trig) =
-    ET { trig | id <- keyToVal nameDict trig.eventName }
+    ET { trig | id = keyToVal nameDict trig.eventName }
 
 
 setChildNodeIdsOnNodes : D.Dict String Int -> Node -> Node
@@ -130,7 +130,7 @@ setChildNodeIdsOnNodes nameDict node =
         childrenIds = L.map (keyToVal nameDict) node.childNames
         parentId = withDefault -1 (D.get node.parentName nameDict)
     in
-        { node | childIds <- childrenIds, parentId <- parentId }
+        { node | childIds = childrenIds, parentId = parentId }
 
 
 nodeToChildParentMapping : Node -> (Int, List Int)
@@ -140,7 +140,7 @@ filterEmptyChildren : (Int,List Int) -> Bool
 filterEmptyChildren (pid,cids) = (cids /= []) 
 
 setNodeParentId : Int -> Node -> Node
-setNodeParentId pid node = {node | parentId <- pid}
+setNodeParentId pid node = {node | parentId = pid}
 
 nodesToParentChildMapping : List Node -> List (Int, (List Int))
 nodesToParentChildMapping nodes =
@@ -215,9 +215,10 @@ validateParentChildRelation idsToNames ixNodes =
  -}
 ensureParentIdMap : Node -> Node
 ensureParentIdMap  node =
-        if  | (node.parentId >= 0) -> node
-            | otherwise ->  { node  | parentId <- node.id
-                            }       
+        if (node.parentId >= 0) then node
+        else
+           { node | parentId = node.id }
+                                   
 
 sub (ax, ay) (bx,by) = (bx-ax, by-ay)
 
@@ -240,21 +241,22 @@ updateBoundingRectMap ixNodes node =
         rtl = sub (cx,cy) (tlx,tly) -- make bounding box relative to that relative center
         rbr = sub (cx,cy) (brx,bry)
     in
-        if  | (L.length node.childIds == 0) -> node
-            | otherwise ->  { node  | tl <- rtl--(tlx,tly)
-                                    , br <- rbr--(brx,bry)
-                                    , w <- w
-                                    , h <- h
-                                    , x <- cx
-                                    , y <- cy
-                            }       
+        if (L.length node.childIds == 0) then node
+        else
+            { node  | tl = rtl --(tlx,tly)
+            , br = rbr         --(brx,bry)
+            , w = w
+            , h = h
+            , x = cx
+            , y = cy
+            }       
 
 
 
 relativiseChildCentersMap : Ix.IxArray Node -> Node -> Node
 relativiseChildCentersMap ixNodes node =
     let
-        (Just pnode) = Ix.get node.parentId ixNodes -- parent ID has been properly set
+        pnode = withDefault emptyNode (Ix.get node.parentId ixNodes) -- parent ID has been properly set
         (cx,cy) = getPos pnode
         relx = toFloat node.x - cx
         rely = toFloat node.y - cy      -- (relx,rely) = (node.x,node.y) - (pnode.x,pnode.y)
@@ -263,12 +265,13 @@ relativiseChildCentersMap ixNodes node =
                                 -- the plan is to update dx with parents position, so child nodes
                                 -- get delegated individual collision detection
     in
-        if | (node.id == node.parentId) -> node -- leave self parents alone
-           | otherwise -> { node | x  <- round relx
-                                 , y  <- round rely
-                                 , px <- cx
-                                 , py <- cy
-                          }  
+        if (node.id == node.parentId) then node -- leave self parents alone
+        else 
+            { node | x  = round relx
+            , y  = round rely
+            , px = cx
+            , py = cy
+            }  
 
 
 
@@ -315,8 +318,8 @@ updateTags scene =
         ixEventSetsWithNodeIds = Ix.updateIxArrayFromProvidedIxList getEventSetIx reindexedES eventsWithNodeIds --update into the IxArray from updated list 
         updatedTriggers = L.map (setNodeIdsOnTriggers nametoids) scene.triggers -- place node ids on triggers
     in
-        { scene | ixNodes <- completedIxNodes --updatedIxNodes--reindexedNodes
-        , ixEventSets <- ixEventSetsWithNodeIds
-        , triggers <- updatedTriggers -- since all triggers are walked there is no need for random access, so just use list
-        , tags <- nametoids } 
+        { scene | ixNodes = completedIxNodes --updatedIxNodes--reindexedNodes
+        , ixEventSets = ixEventSetsWithNodeIds
+        , triggers = updatedTriggers -- since all triggers are walked there is no need for random access, so just use list
+        , tags = nametoids } 
 

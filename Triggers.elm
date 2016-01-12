@@ -9,6 +9,7 @@ import IxArray as Ix
 import NodeUtil exposing (getHOVByName, getHOVById)
 import EventUtils exposing (activate, toggle)
 import List
+import Maybe exposing (withDefault)
 import Debug
 
 
@@ -57,7 +58,7 @@ trigger esid scene ixaEventSets =
             None    -> ixaEventSets
             _       -> 
                         let
-                            (Just es)  = Ix.get esid ixaEventSets
+                            es = withDefault emptyEventSet (Ix.get esid ixaEventSets)
                             nes = toggle scene es
                         in
                             Ix.set esid nes ixaEventSets
@@ -69,9 +70,9 @@ trigger esid scene ixaEventSets =
 springSetEventRec rec =
     let    
         s = rec.state
-        newState = { s | flag <- True }
+        newState = { s | flag = True }
     in
-        { rec | eventStatus <- True, state <- newState }
+        { rec | eventStatus = True, state = newState }
 
 
 springTrigger : Int -> Scene -> Ix.IxArray EventSet -> Ix.IxArray EventSet
@@ -85,7 +86,7 @@ springTrigger esid scene ixaEventSets =
             None -> ixaEventSets 
             _    -> 
                     let
-                        (Just (ES rec)) = Ix.get esid ixaEventSets
+                        (ES rec) = withDefault emptyEventSet (Ix.get esid ixaEventSets)
                         nes =  ES (springSetEventRec rec) 
                     in
                         Ix.set esid nes ixaEventSets                    

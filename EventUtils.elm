@@ -21,7 +21,12 @@ import NodeUtil exposing (getPos, getNodeByIxId, updateNodeInfoScene, updateNode
 import Maybe
 
 
-unsafeHead (h :: rest) = h
+--unsafeHead (h :: rest) = h
+unsafeHead : List a -> a
+unsafeHead lst =
+    case (List.head lst) of
+        (Just h)  -> h
+        otherwise -> Debug.crash "fuck you czapliki"
 
 forever = 1/0
 never = 0
@@ -35,27 +40,27 @@ setFPS currTime fps (ES rec) =
     let
         dt = (1000/fps)
         s = rec.state
-        ns = { s | fps <- dt, nextUpdate <- (currTime+dt) }
+        ns = { s | fps = dt, nextUpdate = (currTime+dt) }
     in
-        ES { rec | state <- ns }
+        ES { rec | state = ns }
 
 
 resetFPS currTime (ES rec) =
     let
         s = rec.state
         dt = s.fps
-        ns = { s | nextUpdate <- (currTime+dt) }
+        ns = { s | nextUpdate = (currTime+dt) }
     in
-        ES { rec | state <- ns }
+        ES { rec | state = ns }
 
 activate : Scene -> EventSet -> EventSet
 activate scene (ES es) =
     let
         s = es.state
-        ns = { s | lastUpdate <- scene.currTime, nextUpdate <- (scene.currTime + es.state.fps) }
+        ns = { s | lastUpdate = scene.currTime, nextUpdate = (scene.currTime + es.state.fps) }
     in
-        ES  { es | eventStatus <- True  
-            , state <- ns
+        ES  { es | eventStatus = True  
+            , state = ns
             }  
 
 
@@ -63,10 +68,10 @@ toggle : Scene -> EventSet -> EventSet
 toggle scene (ES es) =
     let
         s = es.state
-        ns = { s | lastUpdate <- scene.currTime, nextUpdate <- (scene.currTime + es.state.fps) }
+        ns = { s | lastUpdate = scene.currTime, nextUpdate = (scene.currTime + es.state.fps) }
     in
-        ES  { es | eventStatus <- not (es.eventStatus)  
-            , state <- ns
+        ES  { es | eventStatus = not (es.eventStatus)  
+            , state = ns
             }  
 
 runEvent : Scene -> EventSet -> Ix.IxArray EventSet -> Ix.IxArray Node -> (Ix.IxArray EventSet, Ix.IxArray Node)
@@ -80,8 +85,8 @@ runEvent scene (ES eventSet) ixES ixnodes =
         ((ES newEventSet), updatedEventNodes) = eventSet.act (ES eventSet) scene affectedNodes
         eventedState = newEventSet.state
         qtEventedNodes = L.map (updateNodeInfoScene scene) updatedEventNodes
-        newState = {eventedState | nextUpdate <- nu, lastUpdate <- scene.currTime }
-        newNewEventSet = ES ({ newEventSet | state <- newState })
+        newState = {eventedState | nextUpdate = nu, lastUpdate = scene.currTime }
+        newNewEventSet = ES ({ newEventSet | state = newState })
         updatedIxEs = Ix.set eventSet.id newNewEventSet ixES 
     in       
        --(ixES, ixnodes)
@@ -99,15 +104,18 @@ effectEvent scene (ES eventSet) (ixES, ixnodes) =
     in    
         case eventSet.eventStatus of
             True ->    
-                if  | (notExpired && update) -> runEvent scene (ES eventSet) ixES ixnodes
-                    | expired ->
-                        let
-                            newES = ES { eventSet | eventStatus <- False }
-                            updatedIxES = Ix.set eventSet.id newES ixES
-                        in
-                            (updatedIxES, ixnodes)
+                if (notExpired && update) then 
+                    runEvent scene (ES eventSet) ixES ixnodes
+                else if expired then
+                    let
+                        newES = ES { eventSet | eventStatus = False }
+                        updatedIxES = Ix.set eventSet.id newES ixES
+                    in
+                        (updatedIxES, ixnodes)
                 
-                    | otherwise -> (ixES, ixnodes)
+                else  
+                    (ixES, ixnodes)
+
             False ->
                 (ixES, ixnodes)
 
@@ -134,7 +142,7 @@ runIxEvents scene ixes ixnodes =
  -}
 
 incy node = 
-    { node | y <- node.y + 1 } 
+    { node | y = node.y + 1 } 
 
 floataway : EventSet -> Scene -> List Node -> (EventSet, List Node) 
 floataway es scene nodes =
@@ -145,9 +153,9 @@ floataway es scene nodes =
 
 reflect : Int -> Int -> Int -> Float -> (Int, Float)
 reflect val l u v =
-    if | val < l -> (l, -v)
-       | val > u -> (u, -v)
-       | otherwise -> (val, v)
+    if (val < l) then (l, -v)
+    else if (val > u) then (u, -v)
+    else (val, v)
 
 addDelta : Float -> Int -> Int -> Int -> Int -> Node -> Node
 addDelta n sx sy w h node =
@@ -159,7 +167,7 @@ addDelta n sx sy w h node =
         (newx, newvx) = reflect ax (sx - exx) (exx + sx) node.vx
         (newy, newvy) = reflect ay (sy - exy)  (exy + sy) node.vy
     in
-        { node | x <- newx, y <- newy, vx <- newvx, vy <- newvy }
+        { node | x = newx, y = newy, vx = newvx, vy = newvy }
 
 
 vector : EventSet -> Scene -> List Node -> (EventSet, List Node)
@@ -180,9 +188,9 @@ vectorBounce10 (ES es) scene nodes =
         incr = if ((old.vx /= new.vx) || (old.vy /= new.vy)) then 1 else 0
         newcnt  = if (state.count + incr) /= 10 then (state.count + incr) else 0
         newstatus = if (state.count + incr) == 10 then False else True
-        newstate = { state | count <- newcnt }
+        newstate = { state | count = newcnt }
     in
-        ((ES {es| state <- newstate, eventStatus <- newstatus} ), newNodes)
+        ((ES {es| state = newstate, eventStatus = newstatus} ), newNodes)
 
 
 
@@ -209,12 +217,12 @@ vectorFriction (ES es) scene nodes =
         newNodes = L.map (addDelta ((toFloat s.count) * velo) scene.x scene.y scene.w scene.h) nodes
         newstatus = if velo < min_value then False else True 
         --a = Debug.log "velo" (velo, s.flag)
-        newstate = { s | unit <- velo, flag <- False }
+        newstate = { s | unit = velo, flag = False }
         {-
         -}
     in
         --((ES es), nodes)
-        ((ES {es| state <- newstate, eventStatus <- newstatus} ), newNodes)
+        ((ES {es| state = newstate, eventStatus = newstatus} ), newNodes)
 
 
 

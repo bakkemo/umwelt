@@ -48,7 +48,10 @@ import Maybe exposing (..)
 
 
 unsafeHead : List a -> a
-unsafeHead (h :: rest) = h
+unsafeHead lst =
+    case (List.head lst) of
+        (Just h)  -> h
+        otherwise -> Debug.crash "fuck you czapliki"
         
 -- since nodes take into account touches dx,dy component
 -- take them into acccount when placing forms
@@ -99,9 +102,9 @@ getDisPrefix (x,y) (dx,dy) =
 -- to handle "drawing" child nodes (exact semantics TBD)
 moveNodeCase : Ix.IxArray Node -> Node -> List Form
 moveNodeCase ixNodes node =
-    if | (node.id == node.parentId) && (node.childIds == []) -> moveNodeWD node -- self parent, no children
-       | (node.id == node.parentId) -> moveNodeAsParentWD ixNodes node -- parent with children, so handles "draw" of children
-       | otherwise -> []  -- strictly a child node...handled by previous case
+    if (node.id == node.parentId) && (node.childIds == []) then moveNodeWD node -- self parent, no children
+    else if (node.id == node.parentId) then moveNodeAsParentWD ixNodes node -- parent with children, so handles "draw" of children
+    else []  -- strictly a child node...handled by previous case
 {-                let
                     a = Debug.log "skip" node.id
                 in
@@ -111,7 +114,7 @@ moveNodeCase ixNodes node =
 
 
 addCenter : (Float, Float) -> Node -> Node
-addCenter (cx,cy) node = { node | px <- cx, py <- cy } 
+addCenter (cx,cy) node = { node | px = cx, py = cy } 
 
 
 moveNodeAsParentWD : Ix.IxArray Node -> Node -> List Form
@@ -456,7 +459,7 @@ hovToUpdatedIxNode rmp nodes dropped touches droppedTouches hov =
         None -> Nothing 
         (Hov (nid, name, (x,y)) tid) ->
             let
-                (Just node) = Ix.get nid nodes
+                node = withDefault emptyNode (Ix.get nid nodes)
                 (DH dragFunc) = node.dh
                 childNodes = getChildNodes nodes node.childIds
             in
@@ -484,21 +487,24 @@ calcQTPrefix x y lx ly rx ry curDepth prefix =
         newx = lx + ((rx - lx) // 2)
         newy = ry + ((ly - ry) // 2)
     in
-        if | (curDepth == 0) -> prefix
-           | otherwise ->
-                if  | ((x >= newx) && (y >= newy)) -> calcQTPrefix x y newx ly rx newy (curDepth-1) ("1" ++ prefix)
-                    | ((x >= newx) && (y < newy)) ->  calcQTPrefix x y newx newy rx ry (curDepth-1) ("4" ++ prefix)
-                    | ((x < newx) && (y >= newy)) ->  calcQTPrefix x y lx ly newx newy (curDepth-1) ("2" ++ prefix)
-                    | ((x < newx) && (y < newy)) ->   calcQTPrefix x y lx newy newx ry (curDepth-1) ("3" ++ prefix)
+        if (curDepth == 0) then prefix
 
-
+        else 
+            if ((x >= newx) && (y >= newy)) then 
+                (calcQTPrefix x y newx ly rx newy (curDepth-1) ("1" ++ prefix))
+            else if ((x >= newx) && (y < newy)) then 
+                (calcQTPrefix x y newx newy rx ry (curDepth-1) ("4" ++ prefix))
+            else if ((x < newx) && (y >= newy)) then
+                (calcQTPrefix x y lx ly newx newy (curDepth-1) ("2" ++ prefix))
+            else --((x < newx) && (y < newy))
+                (calcQTPrefix x y lx newy newx ry (curDepth-1) ("3" ++ prefix))
 
 updateNodePrefix scenew sceneh depth node =
     let
         x = scenew // 2
         y = sceneh // 2
     in
-        { node | prefix <- calcQTPrefix node.x node.y -x y x -y depth "" }
+        { node | prefix = calcQTPrefix node.x node.y -x y x -y depth "" }
 
 updateNodeQTData scene_width scene_height depth node =
     let
@@ -517,7 +523,7 @@ updateNodeQTData scene_width scene_height depth node =
         --qqtd = nd.qtData 
     in
         --nd
-        { node | qt_trp <- trp, qt_tlp <- tlp, qt_blp <- blp, qt_brp <- brp  }
+        { node | qt_trp = trp, qt_tlp = tlp, qt_blp = blp, qt_brp = brp  }
 
 adjustValue : Float -> Float -> Float -> Float -> Char -> (Float, Float)
 adjustValue w h x y c =
@@ -526,6 +532,7 @@ adjustValue w h x y c =
        '2' -> (x-w, y+h)
        '3' -> (x-w, y-h)
        '4' -> (x+w, y-h)
+       _   -> (0.0, 0.0)
     
 walkPrefix : Float -> Float -> Float -> Float -> String -> (Float, Float)
 walkPrefix w h x y p =
@@ -652,8 +659,8 @@ qtIntersections dict =
 -- enforce the invarient (a < b) in (a,b)
 qtOrderedTuple : Int -> Int -> (Int, Int)
 qtOrderedTuple a b =
-    if | (a < b)    -> (a,b)
-       | otherwise  -> (b,a)
+    if (a < b) then (a,b)
+    else (b,a)
 
 
 
@@ -674,8 +681,8 @@ updateNodeInfo w h d node =
 
 
 updateNodeBoundInfo node =
-    if | (node.bound == Circ) -> node
-       | otherwise -> updatePolyInfo node 
+    if (node.bound == Circ) then node
+    else updatePolyInfo node 
        
 updatePolyInfo : Node -> Node
 updatePolyInfo node =
@@ -685,10 +692,10 @@ updatePolyInfo node =
         w = round ((brx - tlx) /2)
         h = round ((tly - bry) /2)
     in
-        { node  | tl <- (round tlx, round tly)
-                , br <- (round brx, round bry)
-                , w <- w
-                , h <- h }  
+        { node  | tl = (round tlx, round tly)
+                , br = (round brx, round bry)
+                , w = w
+                , h = h }  
                 
 
 tlFold : (Float, Float) -> (Float, Float) -> (Float, Float)
