@@ -11,7 +11,7 @@ able to interact with it later.
 It's pretty rococo; I was throwing code against a wall to see what stuck while attempting to
 implement each new interaction I wanted. No work has been put into cleaning any false starts,
 removing debug tooling, project orginization, or performace considerations.
-The usual caveats (emptor) apply. It is however Elm 0.14 code (ick..that update was annoying).
+The usual caveats (emptor) apply. It is however Elm 0.15 code.
 
 In fact it might be rather painful to dig into as I haven't put any work into documentation either,
 but you can play with it and see if it does anything you like. Feel free to think of it as a parts
@@ -28,6 +28,6 @@ Feel free to send ideas/critiques. Part of that is I had my head down and follow
 post v0.13. If you offhand notice something I'm doing that is obviated by new Elm core or community stuff,
 or new Elm semantics, it would be awesome if you let me know :)
 
-You should be able to just install elm 0.14, clone into a directory, and run elm-reactor in it. main is
+You should be able to just install elm 0.15, clone into a directory, and run elm-reactor in it. main is
 in click.elm. Move the objects around. Notice the collision detection. drag and release the blue dot.
 Drop a node on the green dot. drop something on it again. Wheeee!
